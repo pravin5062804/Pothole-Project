@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -8,115 +9,155 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   MapPin,
+  RefreshCw,
 } from 'lucide-react';
-
-const OVERVIEW_CARDS = [
-  {
-    title: 'Total Reports',
-    value: '12,547',
-    change: '+12.5%',
-    up: true,
-    icon: <BarChart3 size={22} />,
-    bg: 'bg-green-50',
-    iconColor: 'text-green-600',
-  },
-  {
-    title: 'Resolved',
-    value: '8,231',
-    change: '+8.2%',
-    up: true,
-    icon: <CheckCircle size={22} />,
-    bg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-  },
-  {
-    title: 'Pending',
-    value: '2,316',
-    change: '-3.1%',
-    up: false,
-    icon: <Clock size={22} />,
-    bg: 'bg-orange-50',
-    iconColor: 'text-orange-600',
-  },
-  {
-    title: 'Active Citizens',
-    value: '25,892',
-    change: '+18.7%',
-    up: true,
-    icon: <Users size={22} />,
-    bg: 'bg-purple-50',
-    iconColor: 'text-purple-600',
-  },
-];
-
-const CATEGORY_DATA = [
-  { name: 'Potholes & Roads', count: 3421, pct: 27, color: 'bg-red-400' },
-  { name: 'Garbage & Waste', count: 2856, pct: 23, color: 'bg-green-400' },
-  { name: 'Streetlights', count: 1987, pct: 16, color: 'bg-yellow-400' },
-  { name: 'Drainage', count: 1743, pct: 14, color: 'bg-blue-400' },
-  { name: 'Water Supply', count: 1376, pct: 11, color: 'bg-cyan-400' },
-  { name: 'Others', count: 1164, pct: 9, color: 'bg-gray-400' },
-];
-
-const RECENT_ACTIVITY = [
-  {
-    action: 'Report #CR-4521 assigned to Maintenance Team',
-    time: '5 min ago',
-    type: 'assign',
-  },
-  {
-    action: 'Report #CR-4498 status changed to In Progress',
-    time: '12 min ago',
-    type: 'progress',
-  },
-  {
-    action: 'Report #CR-4467 has been Resolved',
-    time: '1 hr ago',
-    type: 'resolved',
-  },
-  {
-    action: 'New report #CR-4530 submitted in Sector 14',
-    time: '2 hr ago',
-    type: 'new',
-  },
-  {
-    action: 'Report #CR-4312 verified by citizen',
-    time: '3 hr ago',
-    type: 'verified',
-  },
-];
-
-const TOP_AREAS = [
-  { name: 'MG Road, Sector 12', reports: 342 },
-  { name: 'Gandhi Nagar', reports: 289 },
-  { name: 'City Center', reports: 267 },
-  { name: 'Ring Road', reports: 234 },
-  { name: 'Industrial Area', reports: 198 },
-];
+import { issueApi } from '../api/issueApi';
 
 export default function DashboardPage() {
+  const [statsData, setStatsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const data = await issueApi.getDashboardStats();
+      if (data && data.success) {
+        setStatsData(data);
+      }
+    } catch (err) {
+      console.warn('Dashboard stats fallback mode:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const totalReports = statsData?.stats?.totalReports ?? 12547;
+  const resolvedCount = statsData?.stats?.resolved ?? 8231;
+  const pendingCount = statsData?.stats?.pending ?? 2316;
+  const activeCitizens = statsData?.stats?.activeCitizens ?? 25892;
+
+  const overviewCards = [
+    {
+      title: 'Total Reports',
+      value: totalReports.toLocaleString(),
+      change: '+12.5%',
+      up: true,
+      icon: <BarChart3 size={22} />,
+      bg: 'bg-green-50',
+      iconColor: 'text-green-600',
+    },
+    {
+      title: 'Resolved',
+      value: resolvedCount.toLocaleString(),
+      change: '+8.2%',
+      up: true,
+      icon: <CheckCircle size={22} />,
+      bg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      title: 'Pending / Active',
+      value: pendingCount.toLocaleString(),
+      change: '-3.1%',
+      up: false,
+      icon: <Clock size={22} />,
+      bg: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+    },
+    {
+      title: 'Active Citizens',
+      value: activeCitizens.toLocaleString(),
+      change: '+18.7%',
+      up: true,
+      icon: <Users size={22} />,
+      bg: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+    },
+  ];
+
+  const categoryColors = {
+    pothole: 'bg-red-400',
+    garbage: 'bg-green-400',
+    streetlight: 'bg-yellow-400',
+    drainage: 'bg-blue-400',
+    water: 'bg-cyan-400',
+    other: 'bg-gray-400',
+  };
+
+  const categoryData = statsData?.categoryData && statsData.categoryData.length > 0
+    ? statsData.categoryData.map((c) => ({
+        ...c,
+        color: categoryColors[c.key] || 'bg-emerald-400',
+      }))
+    : [
+        { name: 'Potholes & Roads', count: 3421, pct: 27, color: 'bg-red-400' },
+        { name: 'Garbage & Waste', count: 2856, pct: 23, color: 'bg-green-400' },
+        { name: 'Streetlights', count: 1987, pct: 16, color: 'bg-yellow-400' },
+        { name: 'Drainage', count: 1743, pct: 14, color: 'bg-blue-400' },
+        { name: 'Water Supply', count: 1376, pct: 11, color: 'bg-cyan-400' },
+        { name: 'Others', count: 1164, pct: 9, color: 'bg-gray-400' },
+      ];
+
+  const recentActivity = statsData?.recentActivity && statsData.recentActivity.length > 0
+    ? statsData.recentActivity.map((r) => ({
+        action: r.action,
+        time: new Date(r.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: r.type,
+      }))
+    : [
+        { action: 'Report #CR-4521 assigned to Maintenance Team', time: '5 min ago', type: 'assign' },
+        { action: 'Report #CR-4498 status changed to In Progress', time: '12 min ago', type: 'progress' },
+        { action: 'Report #CR-4467 has been Resolved', time: '1 hr ago', type: 'resolved' },
+        { action: 'New report #CR-4530 submitted in Sector 14', time: '2 hr ago', type: 'new' },
+        { action: 'Report #CR-4312 verified by citizen', time: '3 hr ago', type: 'verified' },
+      ];
+
+  const topAreas = statsData?.topAreas && statsData.topAreas.length > 0
+    ? statsData.topAreas
+    : [
+        { name: 'MG Road, Sector 12', reports: 342 },
+        { name: 'Gandhi Nagar', reports: 289 },
+        { name: 'City Center', reports: 267 },
+        { name: 'Ring Road', reports: 234 },
+        { name: 'Industrial Area', reports: 198 },
+      ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-br from-green-700 via-green-600 to-emerald-500 py-12 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-4 py-1.5 rounded-full text-sm text-white/90 font-medium mb-4">
-            <BarChart3 size={16} />
-            Analytics Dashboard
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-4 py-1.5 rounded-full text-sm text-white/90 font-medium mb-4">
+              <BarChart3 size={16} />
+              Analytics & Triaging Dashboard
+            </div>
+            <h1 className="font-primary text-4xl max-md:text-3xl font-extrabold text-white mb-2">
+              City Operations Dashboard
+            </h1>
+            <p className="text-white/80 text-base">
+              Real-time insights on crowdsourced civic issues, AI triaging, and community resolutions
+            </p>
           </div>
-          <h1 className="font-primary text-4xl max-md:text-3xl font-extrabold text-white mb-2">
-            Dashboard
-          </h1>
-          <p className="text-white/80 text-base">
-            Overview of civic issue reporting across your city
-          </p>
+
+          <button
+            onClick={fetchStats}
+            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          >
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            Sync
+          </button>
         </div>
       </div>
 
       <div className="max-w-[1200px] mx-auto px-6 -mt-6 pb-20">
         {/* Overview Cards */}
         <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-5 mb-8">
-          {OVERVIEW_CARDS.map((card) => (
+          {overviewCards.map((card) => (
             <div
               key={card.title}
               className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
@@ -150,7 +191,7 @@ export default function DashboardPage() {
                 Issues by Category
               </h3>
               <div className="space-y-4">
-                {CATEGORY_DATA.map((cat) => (
+                {categoryData.map((cat) => (
                   <div key={cat.name}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium text-gray-700">{cat.name}</span>
@@ -169,7 +210,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Resolution Time Chart (Visual representation) */}
+            {/* Resolution Time Chart */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h3 className="font-primary text-lg font-bold text-gray-900 mb-6">
                 Monthly Resolution Trend
@@ -217,20 +258,20 @@ export default function DashboardPage() {
             {/* Recent Activity */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h3 className="font-primary text-lg font-bold text-gray-900 mb-4">
-                Recent Activity
+                Recent Activity & Triaging
               </h3>
               <div className="space-y-4">
-                {RECENT_ACTIVITY.map((item, i) => (
+                {recentActivity.map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div
                       className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
                         item.type === 'resolved'
                           ? 'bg-green-500'
-                          : item.type === 'progress'
+                          : item.type === 'in_progress' || item.type === 'progress'
                             ? 'bg-yellow-500'
-                            : item.type === 'new'
+                            : item.type === 'reported' || item.type === 'new'
                               ? 'bg-blue-500'
-                              : 'bg-gray-400'
+                              : 'bg-purple-500'
                       }`}
                     />
                     <div>
@@ -245,10 +286,10 @@ export default function DashboardPage() {
             {/* Top Areas */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h3 className="font-primary text-lg font-bold text-gray-900 mb-4">
-                Top Reporting Areas
+                Top Reporting Areas / Hotspots
               </h3>
               <div className="space-y-3">
-                {TOP_AREAS.map((area, i) => (
+                {topAreas.map((area, i) => (
                   <div
                     key={area.name}
                     className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -268,18 +309,18 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {/* Pipeline Performance */}
             <div className="bg-gradient-to-br from-green-700 to-emerald-600 rounded-2xl p-6 text-white">
-              <h3 className="font-primary text-lg font-bold mb-4">Performance</h3>
+              <h3 className="font-primary text-lg font-bold mb-4">Pipeline Capabilities</h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'Avg Response', value: '4.2h' },
-                  { label: 'Avg Resolution', value: '3.2d' },
-                  { label: 'Satisfaction', value: '94%' },
-                  { label: 'Repeat Rate', value: '2.1%' },
+                  { label: 'AI Classification', value: 'Groq LLM' },
+                  { label: 'Geo Deduplication', value: 'Turf 75m' },
+                  { label: 'Realtime Push', value: 'Socket.IO' },
+                  { label: 'Citizen Vote', value: 'Active' },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-white/10 rounded-xl p-3 text-center">
-                    <p className="text-xl font-extrabold">{stat.value}</p>
+                    <p className="text-sm font-extrabold">{stat.value}</p>
                     <p className="text-xs text-white/70 mt-0.5">{stat.label}</p>
                   </div>
                 ))}

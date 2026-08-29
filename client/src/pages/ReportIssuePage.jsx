@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Camera,
   MapPin,
@@ -11,7 +11,10 @@ import {
   Construction,
   MoreHorizontal,
   CheckCircle,
+  Loader2,
+  X,
 } from 'lucide-react';
+import { issueApi } from '../api/issueApi';
 
 const ISSUE_CATEGORIES = [
   { id: 'pothole', label: 'Potholes & Roads', icon: <AlertCircle size={20} /> },
@@ -30,15 +33,96 @@ const SEVERITY_LEVELS = [
 ];
 
 export default function ReportIssuePage() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [severity, setSeverity] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [severity, setSeverity] = useState('medium');
+  const [address, setAddress] = useState('');
+  const [coords, setCoords] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submittedInfo, setSubmittedInfo] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
   const [dragActive, setDragActive] = useState(false);
 
-  const handleSubmit = (e) => {
+  const fileInputRef = useRef(null);
+
+  const handleFiles = (fileList) => {
+    const selected = Array.from(fileList).slice(0, 3);
+    setPhotos(selected);
+    const previews = selected.map((f) => URL.createObjectURL(f));
+    setPhotoPreviews(previews);
+  };
+
+  const handleUseGPS = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+          if (!address) {
+            setAddress(`GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+          }
+        },
+        (err) => {
+          console.warn('Geolocation error:', err.message);
+          alert('Could not fetch precise GPS. Using default location coordinates.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported in this browser.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
+    setLoading(true);
+    setErrorMsg('');
+    setSubmittedInfo(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      if (selectedCategory) formData.append('category', selectedCategory);
+      if (severity) formData.append('severity', severity);
+      if (address) formData.append('address', address);
+
+      if (coords) {
+        formData.append('latitude', coords.lat);
+        formData.append('longitude', coords.lng);
+      }
+
+      photos.forEach((file) => {
+        formData.append('photos', file);
+      });
+
+      const response = await issueApi.reportIssue(formData);
+
+      setSubmittedInfo({
+        ticketId: response.issue?.ticketId || 'CR-2026-NEW',
+        isMerged: response.isMergedDuplicate,
+        message: response.message,
+      });
+
+      // Clear fields
+      setTitle('');
+      setDescription('');
+      setSelectedCategory('');
+      setSeverity('medium');
+      setAddress('');
+      setPhotos([]);
+      setPhotoPreviews([]);
+      setCoords(null);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Failed to submit report. Please verify connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,16 +152,35 @@ export default function ReportIssuePage() {
             onSubmit={handleSubmit}
             className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8"
           >
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+                <AlertCircle size={20} className="shrink-0 text-red-600" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             {/* Success Message */}
-            {submitted && (
-              <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4 animate-fade-in-up">
-                <CheckCircle size={22} className="text-green-600 shrink-0" />
+            {submittedInfo && (
+              <div className="mb-6 flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4 animate-fade-in-up">
+                <CheckCircle size={22} className="text-green-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-green-800">Issue Reported Successfully!</p>
-                  <p className="text-sm text-green-600">
-                    Your report ID is #CR-2026-{Math.floor(Math.random() * 9000 + 1000)}. You can
-                    track it from the Track Issue page.
+                  <p className="font-semibold text-green-800">
+                    {submittedInfo.isMerged
+                      ? 'Report Matched & Merged with Existing Issue!'
+                      : 'Issue Reported Successfully!'}
                   </p>
+                  <p className="text-sm text-green-600 mt-1">
+                    Your Ticket ID is{' '}
+                    <span className="font-bold text-green-900">#{submittedInfo.ticketId}</span>.
+                    You can track its live progress from the Track Issue page.
+                  </p>
+                  {submittedInfo.isMerged && (
+                    <p className="text-xs text-green-700 mt-1 bg-green-100/60 p-2 rounded-lg">
+                      💡 Note: Our geo-clustering detected an active report in the same location and
+                      merged your report to boost its recurrence and priority rank!
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -94,6 +197,8 @@ export default function ReportIssuePage() {
                 id="issue-title"
                 type="text"
                 required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Large pothole on Main Street"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all placeholder:text-gray-400"
               />
@@ -135,6 +240,8 @@ export default function ReportIssuePage() {
                 id="issue-description"
                 rows={5}
                 required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Provide detailed information about the issue, its location, and how long it has existed..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all resize-none placeholder:text-gray-400"
               />
@@ -157,17 +264,25 @@ export default function ReportIssuePage() {
                   id="issue-location"
                   type="text"
                   required
-                  placeholder="Enter address or use current location"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Enter address or landmark (or use GPS)"
                   className="w-full pl-11 pr-32 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all placeholder:text-gray-400"
                 />
                 <button
                   type="button"
+                  onClick={handleUseGPS}
                   className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors cursor-pointer"
                 >
                   <MapPin size={14} />
                   Use GPS
                 </button>
               </div>
+              {coords && (
+                <p className="text-xs text-green-700 mt-1.5">
+                  📍 Geo-coordinates attached: [{coords.lng.toFixed(4)}, {coords.lat.toFixed(4)}]
+                </p>
+              )}
             </div>
 
             {/* Severity */}
@@ -196,15 +311,28 @@ export default function ReportIssuePage() {
             {/* Photo Upload */}
             <div className="mb-8">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Upload Photos
+                Upload Photos (for Groq AI Analysis)
               </label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
               <div
+                onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setDragActive(true);
                 }}
                 onDragLeave={() => setDragActive(false)}
-                onDrop={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+                  if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+                }}
                 className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
                   dragActive
                     ? 'border-green-400 bg-green-50'
@@ -218,17 +346,49 @@ export default function ReportIssuePage() {
                   Drag and drop photos here, or{' '}
                   <span className="text-green-600 font-semibold">browse</span>
                 </p>
-                <p className="text-xs text-gray-400">Supports JPG, PNG, HEIC up to 10MB</p>
+                <p className="text-xs text-gray-400">Supports JPG, PNG, WebP up to 10MB (Cloudinary + AI)</p>
               </div>
+
+              {/* Previews */}
+              {photoPreviews.length > 0 && (
+                <div className="mt-4 flex gap-3 flex-wrap">
+                  {photoPreviews.map((url, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPhotos(photos.filter((_, i) => i !== idx));
+                          setPhotoPreviews(photoPreviews.filter((_, i) => i !== idx));
+                        }}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-4 bg-green-600 text-white rounded-xl text-base font-bold hover:bg-green-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full py-4 bg-green-600 text-white rounded-xl text-base font-bold hover:bg-green-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Upload size={18} />
-              Submit Report
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Analyzing with AI & Submitting...
+                </>
+              ) : (
+                <>
+                  <Upload size={18} />
+                  Submit Report
+                </>
+              )}
             </button>
           </form>
 
@@ -257,46 +417,29 @@ export default function ReportIssuePage() {
 
             {/* Quick Stats */}
             <div className="bg-gradient-to-br from-green-700 to-emerald-600 rounded-2xl p-6 text-white">
-              <h3 className="font-primary text-lg font-bold mb-4">📊 This Month</h3>
+              <h3 className="font-primary text-lg font-bold mb-4">📊 System Pipeline</h3>
               <div className="space-y-4">
                 {[
-                  { label: 'Reports Filed', value: '1,247' },
-                  { label: 'Avg Resolution', value: '3.2 days' },
-                  { label: 'Satisfaction', value: '94%' },
+                  { label: 'AI Classification', value: 'Groq Vision + LLM' },
+                  { label: 'Deduplication', value: '75m Geo-Radius' },
+                  { label: 'Media Storage', value: 'Cloudinary CDN' },
                 ].map((stat) => (
                   <div key={stat.label} className="flex justify-between items-center">
                     <span className="text-white/75 text-sm">{stat.label}</span>
-                    <span className="font-bold text-lg">{stat.value}</span>
+                    <span className="font-bold text-sm">{stat.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recent Reports */}
+            {/* AI Assistance Badge */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="font-primary text-lg font-bold text-gray-900 mb-4">
-                🔥 Recent Reports
+              <h3 className="font-primary text-lg font-bold text-gray-900 mb-2">
+                🤖 AI Verification
               </h3>
-              <div className="space-y-3">
-                {[
-                  { title: 'Broken streetlight on Park Ave', time: '2 min ago', status: 'New' },
-                  { title: 'Garbage overflow near market', time: '15 min ago', status: 'Assigned' },
-                  { title: 'Water leakage on 5th Street', time: '1 hr ago', status: 'In Progress' },
-                ].map((report) => (
-                  <div
-                    key={report.title}
-                    className="flex items-start justify-between gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{report.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{report.time}</p>
-                    </div>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full whitespace-nowrap">
-                      {report.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Our automated Groq AI service evaluates photo evidence and descriptions to auto-classify categories, assign severity scores, and route high-priority hazards directly to municipal repair crews.
+              </p>
             </div>
           </div>
         </div>

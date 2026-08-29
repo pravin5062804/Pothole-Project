@@ -1,18 +1,40 @@
-# Crowdsourced Civic Issue Reporting & Resolution System
+# 🏛️ CivicLink — Crowdsourced Civic Issue Reporting & Resolution System
 
-A MERN stack-based civic utility platform designed to bridge the trust gap between citizens and municipal authorities. Citizens can report civic issues (potholes, garbage accumulation, drainage failures) with geo-tagged images, which are automatically categorized, de-duplicated using geo-clustering, prioritized, and verified by the reporting community.
+A full-stack **MERN** civic utility platform designed to bridge the trust gap between citizens and municipal authorities. Citizens can report civic issues (potholes, garbage accumulation, streetlight failures, drainage blocks) with geo-tagged photos, which are automatically categorized via **Groq Vision AI**, de-duplicated using **geo-clustering (Turf.js)**, algorithmically prioritized, and verified by the reporting community through a decentralized resolution confirmation workflow.
 
 ---
 
 ## 🚀 Key Features
 
-*   **Photo & GPS-tagged Reporting:** Report civic issues easily by taking a photo and automatically extracting or attaching GPS location.
-*   **AI classification:** Automatic classification of issues (Potholes, Garbage, Drainage) using computer vision with confidence-score routing.
-*   **Duplicate Detection (Deduplication):** Prevents duplicate entries using geo-clustering and text/image similarity, merging close-proximity complaints and increasing recurrence weight.
-*   **Priority Scoring:** Algorithmic ranking of reports based on severity and recurrence count, surfacing high-priority issues to municipal dashboards.
-*   **Trust Verification Layer:** Issues marked "Resolved" by workers go to a **Pending Confirmation** state. The community and the original reporter verify the resolution before the ticket officially closes.
-*   **Admin Dashboard:** Dedicated workspace for municipal staff to assign tasks, visualize duplicate clusters, and manage disputes.
-*   **Field Worker Portal:** Interface for field workers to claim tasks, view exact coordinates, and upload photo evidence of completed resolutions.
+* 📸 **Photo & GPS-Tagged Reporting:** Citizens can capture and submit geo-located reports with multipart image uploads.
+* 🤖 **AI Vision Classification:** Automated issue categorization with confidence scoring powered by Groq Vision models. Low confidence reports are automatically routed for manual review.
+* 📍 **Geospatial Deduplication (75m Radius):** Geo-clustering with Turf.js identifies nearby duplicate complaints, auto-merging them and boosting their recurrence count.
+* ⚡ **Dynamic Priority Algorithm:** Issues are scored dynamically based on severity weight, citizen recurrence merges, and aging factors.
+* 🤝 **Community Trust & Verification Layer:** When an issue is resolved by a field worker, it enters `pending_confirmation`. Citizens vote (`confirm` / `dispute`) to ensure work was actually completed before the ticket closes.
+* 🔐 **Interactive Auth Modal & RBAC:** Full-featured popup modal for Login & Signup supporting **Admin**, **Field Worker**, and **Citizen** roles with JWT authentication.
+* 📡 **Real-Time Live Updates:** Socket.IO integration broadcasts live issue status changes, newly reported tickets, and community votes.
+* 📊 **Executive Analytics Dashboard:** Municipal metrics tracking total reports, resolution rate, active citizens, and category distribution.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend (Client)
+* **Framework:** React 19 + Vite
+* **Styling:** Vanilla CSS + Tailwind CSS v4
+* **Routing:** React Router v7
+* **Icons:** Lucide React
+* **HTTP Client:** Axios (with Bearer JWT interceptors)
+* **Real-Time:** Socket.IO Client
+
+### Backend (Server)
+* **Runtime:** Node.js (ES Modules) + Express.js
+* **Database:** MongoDB Atlas + Mongoose ODM (GeoJSON `2dsphere` spatial indexing)
+* **AI & Vision:** Groq Cloud SDK (`llama-3.3-70b-versatile`, `llama-3.2-11b-vision-preview`)
+* **Geo-Calculations:** `@turf/turf` + MongoDB `$near` geospatial clustering
+* **Media Uploads:** Multer + Cloudinary (with dev base64 fallback)
+* **Authentication:** JSON Web Tokens (JWT) + Bcrypt password hashing
+* **Security & Rate Limiting:** Helmet, Express Rate Limit, CORS
 
 ---
 
@@ -20,86 +42,123 @@ A MERN stack-based civic utility platform designed to bridge the trust gap betwe
 
 ```text
 Civic Reporting System/
-├── client/                     # Frontend client (Vite + React)
-│   ├── public/
+├── client/                     # Frontend Client (Vite + React)
 │   ├── src/
+│   │   ├── api/                # Axios API handlers (authApi, issueApi)
+│   │   ├── components/         # Modular UI, AuthModal, Layout, Home
+│   │   ├── context/            # AuthContext (global state & modal controls)
+│   │   ├── pages/              # Report, Track, Dashboard, About, Contact
+│   │   └── App.jsx             # Main Router & Modal Provider
 │   └── package.json
-├── server/                     # Backend server (Node + Express + Mongoose)
-│   ├── public/
-│   │   └── uploads/            # Temporary storage for uploaded photos
+├── server/                     # Backend Server (Node + Express + Mongoose)
 │   ├── src/
-│   │   ├── config/             # DB & Cloudinary configuration
-│   │   ├── controllers/        # Request handling and business logic
-│   │   ├── middlewares/        # Authentication, Multer file upload, error handling
-│   │   ├── models/             # Mongoose schemas (User, Report)
+│   │   ├── config/             # DB, Cloudinary & ENV configs
+│   │   ├── controllers/        # Auth, Issue, Verification controllers
+│   │   ├── middlewares/        # JWT Auth, Multer, Rate Limiting, Validation
+│   │   ├── models/             # User, Issue, ConfirmationVote schemas
 │   │   ├── routes/             # Express API routes
-│   │   ├── services/           # AI CV models and geo-clustering algorithms
-│   │   ├── utils/              # Priority rank calculators and helper functions
-│   │   └── app.js              # Server entry point
-│   ├── .env.example            # Environment template config
-│   ├── .gitignore              # Git ignore rules for node_modules/env
+│   │   ├── services/           # AI Vision, Geo Deduplication, Priority Rank
+│   │   ├── sockets/            # Socket.IO handlers
+│   │   ├── seed.js             # MongoDB data seeder
+│   │   └── server.js           # Server & Socket.IO bootstrap
+│   ├── .env                    # Server environment variables
 │   └── package.json
-├── PRD.md                      # Product Requirements Document
-└── README.md                   # This document
+├── backend.md                  # Detailed backend architectural documentation
+└── README.md                   # Project overview and setup guide
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## ⚡ Quick Start Guide
 
-*   **Frontend:** React (Vite), CSS (Vanilla Custom CSS)
-*   **Backend:** Node.js, Express.js
-*   **Database:** MongoDB (Mongoose ODM)
-*   **Media Storage:** Cloudinary (for image uploads)
-*   **AI Classifications:** CV/ML Service (Stub/API)
-*   **Geo Calculations:** MongoDB GeoJSON / Geospatial Queries
+### 1. Prerequisites
+* [Node.js](https://nodejs.org/) (v18+ recommended)
+* [MongoDB](https://www.mongodb.com/) (Local instance or MongoDB Atlas URI)
 
 ---
 
-## 💻 Getting Started
-
-### Prerequisites
-
-*   [Node.js](https://nodejs.org/) (v16+ recommended)
-*   [MongoDB](https://www.mongodb.com/) (Local or Atlas Instance)
-
-### Backend Setup
-
+### 2. Backend Setup
 1. Navigate to the server folder:
-   ```bash
+   ```powershell
    cd server
    ```
 2. Install dependencies:
-   ```bash
+   ```powershell
    npm install
    ```
-3. Configure environment variables. Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
+3. Configure `.env` (refer to `.env.example`):
+   ```env
+   PORT=5001
+   NODE_ENV=development
+   CLIENT_URL=http://localhost:5173
+   MONGO_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/civic_reporting_db
+   JWT_SECRET=civic_reporting_secret_jwt_key_2026
+   CLOUDINARY_URL=cloudinary://<API_KEY>:<API_SECRET>@<CLOUD_NAME>
    ```
-4. Start the backend server in development mode:
-   ```bash
+4. Seed the database with realistic demo issues and accounts:
+   ```powershell
+   npm run seed
+   ```
+5. Start the backend server in development mode:
+   ```powershell
    npm run dev
    ```
 
-### Frontend Setup
+---
 
-1. Navigate to the client folder:
-   ```bash
+### 3. Frontend Setup
+1. Open a new terminal and navigate to the client folder:
+   ```powershell
    cd client
    ```
 2. Install dependencies:
-   ```bash
+   ```powershell
    npm install
    ```
-3. Start the Vite development server:
-   ```bash
+3. Configure `client/.env`:
+   ```env
+   VITE_API_URL=http://localhost:5001/api
+   VITE_SOCKET_URL=http://localhost:5001
+   ```
+4. Start Vite development server:
+   ```powershell
    npm run dev
    ```
+5. Open your browser at: `http://localhost:5173`
+
+---
+
+## 🔑 Demo Credentials
+
+Use the **1-Click Quick Demo Login** inside the Login modal or log in with:
+
+| Role | Email | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| 👑 **Admin** | `admin@gmail.com` | `admin123` | Assign tasks, view stats, manage disputes |
+| 👷 **Field Worker** | `worker@gmail.com` | `worker123` | Update status, upload resolution proof photos |
+| 👤 **Citizen** | `aarav.citizen@example.com` | `password123` | Report issues, track tickets, confirm resolutions |
+
+---
+
+## 📡 API Overview
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Register new citizen, worker, or admin |
+| `POST` | `/api/auth/login` | Login and receive signed JWT token |
+| `GET` | `/api/auth/me` | Fetch authenticated user profile |
+| `GET` | `/api/issues` | Query civic issues with filters (category, ward, status) |
+| `POST` | `/api/issues` | Submit new report with photo & GPS |
+| `GET` | `/api/issues/:id` | Get issue details with timeline and duplicate merge log |
+| `PATCH`| `/api/issues/:id/status` | Update issue status (Worker/Admin) with evidence |
+| `POST` | `/api/verification/:id/vote` | Submit citizen community confirmation vote |
+| `GET` | `/api/issues/stats/overview` | Dashboard analytics and statistics |
+
+*(For full backend specifications, see [`backend.md`](file:///d:/PC-Data/MERN/.Projects/Civic%20Reporting%20System/backend.md))*
 
 ---
 
 ## 👥 Authors
 
-*   **Team:** Nyx Coders
-*   **College:** Vivekanand Education Society's Arts, Science and Commerce College, Chembur, Mumbai
+* **Team:** Nyx Coders
+* **College:** Vivekanand Education Society's Arts, Science and Commerce College, Chembur, Mumbai

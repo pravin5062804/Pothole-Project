@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ScrollToTop from './components/layout/ScrollToTop';
+import AuthModal from './components/auth/AuthModal';
 
 import HomePage from './pages/HomePage';
 import ReportIssuePage from './pages/ReportIssuePage';
@@ -16,6 +17,7 @@ export default function App() {
     <div className="font-body text-gray-800 bg-white antialiased min-h-screen flex flex-col">
       <ScrollToTop />
       <Navbar />
+      <AuthModal />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
