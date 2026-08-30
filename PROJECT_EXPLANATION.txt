@@ -1,0 +1,203 @@
+================================================================================
+CIVIC ISSUE REPORTING & RESOLUTION SYSTEM (MERN + AI + GEOSPATIAL)
+COMPLETE ARCHITECTURE, LOGIC, FEATURES, USER FLOW & CODE STRUCTURE (HINGLISH)
+================================================================================
+
+1. PROJECT OVERVIEW (Yeh Project Kya Hai?)
+--------------------------------------------------------------------------------
+Yeh project ek Full-Stack MERN + AI-powered Smart Municipal Civic Issue Reporting 
+and Resolution Platform hai.
+
+Iska main goal hai:
+- Citizens ko apne locality ke civic issues (potholes, garbage dumping, drainage 
+  overflow, streetlight faults, water supply leakage) easily report karne dena.
+- Smart AI Vision & Groq LLM se images aur descriptions ko auto-classify karna.
+- Turf.js aur MongoDB 2dsphere indexing se duplicate reports ko detect karke 
+  ek hi parent ticket me merge karna (taaki municipal department spam na ho).
+- Recurrence aur severity ke basis par Dynamic Priority Score calculate karna.
+- Municipal Admins ko automatic / manual field worker dispatching provide karna.
+- Field workers dwara resolution completion proof (photo + notes) upload karwana.
+- Community Verification & Dispute loop: jab tak citizen confirm na kare ya agar 
+  dispute ho jaye, ticket reopen hokar elevated priority par chala jata hai.
+
+
+================================================================================
+2. TECH STACK BREAKDOWN
+================================================================================
+Layer                    | Technologies Used
+-------------------------|------------------------------------------------------
+Frontend                 | React.js (Vite), Tailwind CSS, React Router v6, 
+                         | Lucide Icons, Leaflet / OpenStreetMap, Socket.IO Client, Axios
+Core Backend             | Node.js, Express.js, MongoDB Atlas (Mongoose ORM)
+Database Indexing        | MongoDB Geospatial 2dsphere Indexing (Coordinates: [lng, lat])
+AI Vision & Classification| Groq SDK (Llama-3.2-11b-vision-preview / Llama-3.3-70b)
+                         | + Keyword-based Heuristic NLP Fallback Engine
+Geo-Spatial Clustering   | @turf/turf (Spatial Distance Calculation & Clustering)
+Media & CDN Storage      | Multer (Memory Storage) + Cloudinary CDN
+Real-Time Communication  | Socket.IO (Room-based live ticket sync, Admin live feed)
+Security & Reliability   | JWT, bcryptjs, Helmet, CORS, express-rate-limit
+
+
+================================================================================
+3. COMPLETE FOLDER & CODE STRUCTURE
+================================================================================
+
+--- BACKEND STRUCTURE (server/) ---
+server/
+├── src/
+│   ├── app.js                   # Express app setup, security headers, rate limiters, routes mounting
+│   ├── server.js                # HTTP server, Socket.IO setup, MongoDB connection, Admin auto-seed
+│   ├── config/
+│   │   ├── db.js                # MongoDB connection handler via Mongoose
+│   │   ├── env.js               # Centralized environment variables validation
+│   │   └── cloudinary.js        # Cloudinary stream uploader setup for images
+│   ├── models/
+│   │   ├── User.js              # User model (roles: citizen, worker, admin) with bcrypt hashing
+│   │   ├── Issue.js             # Core Issue model (2dsphere location, severity weights, timeline)
+│   │   └── ConfirmationVote.js  # Citizen community confirm/dispute voting records
+│   ├── controllers/
+│   │   ├── authController.js    # Register, login, current user verification, profile updates
+│   │   ├── issueController.js   # Issue CRUD, geo-search, stats, priority re-calc, auto-dispatch
+│   │   └── verificationController.js # Worker evidence submission, citizen vote & dispute handling
+│   ├── routes/
+│   │   ├── authRoutes.js        # /api/auth endpoints
+│   │   ├── issueRoutes.js       # /api/issues endpoints
+│   │   └── verificationRoutes.js# /api/verification endpoints
+│   ├── services/
+│   │   ├── aiService.js         # Groq Vision + LLM classification & confidence scoring
+│   │   ├── geoClusterService.js # Turf.js deduplication & duplicate report merge engine
+│   │   ├── priorityService.js   # Dynamic priority calculation formula
+│   │   ├── queueDispatchService.js # Auto-dispatching tickets to workers by Ward & Category
+│   │   └── notificationService.js  # Socket.IO event broadcasting & Nodemailer email dispatch
+│   ├── middlewares/
+│   │   ├── auth.js              # JWT verification & role authorization (protect, authorize)
+│   │   ├── rateLimit.js         # Rate limiters (general API, report submission, auth endpoints)
+│   │   ├── upload.js            # Multer memory storage configuration for file uploads
+│   │   └── errorHandler.js      # Centralized error handler
+│   ├── sockets/
+│   │   └── socketHandler.js     # Real-time WebSocket rooms (issue room, admin room, worker room)
+│   └── seed.js                  # Database seed script for mock data & test issues
+
+--- FRONTEND STRUCTURE (client/) ---
+client/
+├── src/
+│   ├── main.jsx                 # React root render with BrowserRouter, AuthProvider, SocketProvider
+│   ├── App.jsx                  # Main application routing and shared layout shells
+│   ├── index.css                # Tailwind CSS imports and custom design tokens
+│   ├── api/                     # Axios API client instances
+│   │   ├── authApi.js           # Auth API calls (login, register, me)
+│   │   ├── issueApi.js          # Issue API calls (fetch, create, filter, dispatch, export)
+│   │   └── verificationApi.js   # Evidence submission & voting API calls
+│   ├── context/
+│   │   ├── AuthContext.jsx      # Global user state, JWT handling, login/logout functions
+│   │   └── SocketContext.jsx    # Socket.IO client instance, room subscriptions, real-time listeners
+│   ├── pages/
+│   │   ├── HomePage.jsx         # Landing page with stats, interactive hero, CTA & workflow showcase
+│   │   ├── ReportIssuePage.jsx  # Multi-step issue submission (GPS picker, AI preview, image upload)
+│   │   ├── TrackIssuePage.jsx   # Live tracking with ticket lookup, timeline, vote/dispute modal
+│   │   ├── DashboardPage.jsx    # Public analytics dashboard with interactive city map & metrics
+│   │   ├── AdminPage.jsx        # Municipal admin dashboard with ticket table, filters, auto-dispatch
+│   │   ├── WorkerPage.jsx       # Field worker portal for task management and evidence upload
+│   │   ├── AboutPage.jsx        # Project overview, mission, and system architecture details
+│   │   └── ContactPage.jsx      # Help desk, emergency contact numbers, and feedback form
+│   └── components/
+│       ├── layout/              # Navbar, Footer, ScrollToTop
+│       ├── auth/                # AuthModal (login/signup tabs)
+│       ├── reporting/           # PhotoUpload, LocationPicker, CategorySelector, AIPreviewModal
+│       ├── tracking/            # TimelineView, LiveStatusBadge, ConfirmationVoteModal, DisputeCard
+│       ├── admin/               # IssueListTable, IssueDetailDrawer, WardAnalytics, DispatchModal
+│       └── worker/              # WorkerTaskCard, EvidenceUploadModal, StatusUpdateDropdown
+
+
+================================================================================
+4. CORE BACKEND LOGIC & ALGORITHMS DEEP DIVE
+================================================================================
+
+A. AI VISION & CLASSIFICATION LOGIC (aiService.js):
+--------------------------------------------------------------------------------
+1. Citizen photo upload karta hai -> backend Groq Llama-3.2-11b-vision model ko call karta hai.
+2. AI image & description ko analyze karke JSON return karta hai:
+   {
+     "category": "pothole | garbage | drainage | streetlight | water | other",
+     "confidence": 0.0 to 1.0,
+     "severity": "low | medium | high | critical",
+     "reasoning": "Explanation..."
+   }
+3. Agar confidence score 0.70 se kam hota hai, toh system flag kar deta hai:
+   needsManualReview = true
+4. Agar Groq API unavailable ho, toh smart keyword NLP fallback classifier run hota hai.
+
+B. GEOSPATIAL DEDUPLICATION & CLUSTERING (geoClusterService.js):
+--------------------------------------------------------------------------------
+Civic systems me ek hi issue ko multiple citizens report karte hain.
+1. Jab nayi report aati hai, MongoDB 2dsphere index ke through $near query run hoti hai:
+   - Category match honi chahiye.
+   - Max distance: 50 meters radius.
+   - Status: Active issues only (reported, verified, assigned, in_progress, reopened).
+2. Turf.js exact distance calculate karta hai.
+3. Agar duplicate match ho jata hai:
+   - Naya ticket generate nahi hota.
+   - Parent issue ka recurrenceCount increment hota hai (+1).
+   - Naye reporter ki info (naam, email, phone) parent issue ke reporters array me jud jaati hai.
+   - Nayi photo parent issue me append ho jaati hai.
+   - Priority score automatically badha diya jata hai.
+   - Deduplication Engine ka log timeline me add hota hai.
+
+C. DYNAMIC PRIORITY SCORING ENGINE (priorityService.js):
+--------------------------------------------------------------------------------
+Formula:
+Priority Score = (Severity Weight * Recurrence Count * 10) + Age Bonus + Dispute Penalty
+
+- Severity Weights: Low = 1, Medium = 2, High = 3, Critical = 4
+- Dispute Penalty: Agar resolution dispute ho gaya hai, +25 score add hota hai taaki field worker turant dobara kaam kare.
+
+D. 3-TIER RESOLUTION VERIFICATION & DISPUTE LOOP (verificationController.js):
+--------------------------------------------------------------------------------
+1. Field Worker kaam complete karke completion photo upload karta hai.
+2. Status badal kar 'pending_confirmation' ho jata hai aur 3-day verification window start hoti hai.
+3. Citizen ko real-time notify kiya jata hai.
+4. Agar Citizen 'Confirm' vote karta hai -> Status 'resolved' ban jata hai.
+5. Agar Citizen 'Dispute' vote karta hai (kaam theek se nahi hua) -> 
+   Status 'reopened' ban jata hai, disputedResolution = true ho jata hai, 
+   aur Priority Score elevate hokar ticket wapas queue me chala jata hai.
+
+
+================================================================================
+5. END-TO-END USER FLOW (Ticket Lifecycle)
+================================================================================
+
+Step 1: Citizen Report Karta Hai
+- Citizen Report page par photo upload karta hai aur GPS location set karta hai.
+- AI category aur severity auto-suggest karta hai.
+
+Step 2: Backend Deduplication & Creation
+- Backend check karta hai ki 50 meter ke radius me same issue already hai ya nahi.
+- Duplicate mila -> Merge hota hai aur recurrence badhta hai.
+- Naya mila -> Naya ticket banta hai (CR-2026-XXXX) with status 'reported'.
+
+Step 3: Admin Review & Worker Dispatch
+- Admin Dashboard par ticket visual hota hai with Priority Score.
+- Admin auto-dispatch ya manual assignment ke through field worker ko ticket assign karta hai ('assigned').
+
+Step 4: Field Worker Execution
+- Worker ko taskboard par ticket dikhta hai with map navigation.
+- Worker status 'in_progress' karta hai.
+- Kaam hone par completion photo upload karta hai ('pending_confirmation').
+
+Step 5: Citizen Verification
+- Citizen live tracking page par resolution proof dekhta hai.
+- Citizen Confirm karta hai -> 'resolved'.
+- Citizen Dispute karta hai -> 'reopened' with high priority.
+
+
+================================================================================
+6. REAL-TIME SOCKET.IO EVENT MAP
+================================================================================
+Event Name                | Sender           | Receiver          | Description
+--------------------------|------------------|-------------------|--------------------------------------
+join_issue_room           | Frontend (Track) | Backend           | Citizen ticket room join karta hai
+leave_issue_room          | Frontend (Track) | Backend           | Citizen room leave karta hai
+issue_status_updated      | Backend          | Citizen & Admin   | Realtime status ya proof update
+new_issue_reported        | Backend          | Admin Dashboard   | Live feed me naya ticket broadcast
+admin_channel             | Backend          | Admin Dashboard   | Global municipal alerts
+================================================================================

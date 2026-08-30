@@ -108,12 +108,7 @@ export default function CategoriesSection() {
                 {cat.description}
               </p>
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-              <span className="text-[0.82rem] font-semibold text-orange-500">{cat.count}</span>
-              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-all duration-200 group-hover:bg-green-600 group-hover:text-white group-hover:translate-x-1">
-                <ArrowRight size={14} />
-              </div>
-            </div>
+            
           </motion.div>
         ))}
       </motion.div>

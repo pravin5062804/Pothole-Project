@@ -424,8 +424,16 @@ export default function AdminHeatmapView({
                     click: () => setSelectedIssueId(issue._id),
                   }}
                 >
-                  <Popup>
-                    <div className="p-1.5 font-sans max-w-[280px]">
+                  <Popup
+                    autoPan={true}
+                    autoPanPaddingTopLeft={[40, 80]}
+                    autoPanPaddingBottomRight={[40, 40]}
+                    keepInView={true}
+                    offset={[0, -15]}
+                    maxWidth={300}
+                    minWidth={260}
+                  >
+                    <div className="p-1 font-sans max-w-[280px]">
                       {/* Badge header */}
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${cfg.badge}`}>

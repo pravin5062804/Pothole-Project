@@ -79,7 +79,7 @@ export default function WorkerEvidenceModal({ issue, onClose, onSuccess }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm cursor-pointer"
       onClick={onClose}
     >
       <motion.div

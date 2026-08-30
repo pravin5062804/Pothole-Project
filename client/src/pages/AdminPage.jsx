@@ -255,7 +255,15 @@ export default function AdminPage() {
 
         {activeTab === 'analytics' && <AdminAnalyticsView />}
 
-        {activeTab === 'wards' && <AdminCrewsView issues={issues} />}
+        {activeTab === 'wards' && (
+          <AdminCrewsView
+            issues={issues}
+            onOpenStatusModal={handleOpenStatusModal}
+            onAutoDispatchSingle={handleAutoDispatchSingle}
+            onBatchAutoDispatch={handleBatchAutoDispatch}
+            isDispatching={isDispatchingBatch}
+          />
+        )}
       </main>
 
       {/* Update Status Modal Dialog */}

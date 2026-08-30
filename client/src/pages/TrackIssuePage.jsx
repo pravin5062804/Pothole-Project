@@ -301,8 +301,8 @@ export default function TrackIssuePage() {
 
               <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 transition-all hover:bg-white/15">
                 <p className="text-xs text-cyan-200 font-medium mb-1">Avg. Fix Time</p>
-                <p className="font-primary text-2xl font-black text-cyan-300">~48 hrs</p>
-                <p className="text-[11px] text-emerald-100/70 mt-1">Average turnaround</p>
+                <p className="font-primary text-2xl font-black text-cyan-300">~2 mins</p>
+                <p className="text-[11px] text-emerald-100/70 mt-1">Demo fast turnaround</p>
               </div>
             </motion.div>
           </div>
@@ -546,10 +546,8 @@ export default function TrackIssuePage() {
                           <span>
                             Est. Fix Time:{' '}
                             {issue.severity === 'critical'
-                              ? '4–8 Hours'
-                              : ['garbage', 'drainage'].includes(issue.category)
-                              ? '12–24 Hours'
-                              : '24–48 Hours'}
+                              ? '1–2 Minutes'
+                              : '2–5 Minutes'}
                           </span>
                         </span>
                       </div>

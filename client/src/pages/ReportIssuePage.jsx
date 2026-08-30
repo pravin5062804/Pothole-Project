@@ -316,7 +316,7 @@ export default function ReportIssuePage() {
                 </div>
                 <div className="flex items-center gap-2 bg-black/25 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/10">
                   <Clock size={13} className="text-emerald-300" />
-                  <span>Avg. Resolution: ~48 Hours</span>
+                  <span>Avg. Resolution: ~2 Minutes</span>
                 </div>
               </div>
             </motion.div>

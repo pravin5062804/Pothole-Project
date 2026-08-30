@@ -25,7 +25,7 @@ const fallbackClassify = (title = '', description = '', userCategory = 'other') 
   let severity = 'medium';
   let reasoning = 'Keyword-based heuristic classification.';
 
-  if (combined.includes('pothole') || combined.includes('crater') || combined.includes('road broken') || combined.includes('asphalt')) {
+  if (combined.includes('pothole') || combined.includes('crater') || combined.includes('road broken') || combined.includes('asphalt') || combined.includes('road damage') || combined.includes('hole in road') || combined.includes('road crack')) {
     detected = 'pothole';
     confidence = 0.88;
     severity = combined.includes('large') || combined.includes('accident') || combined.includes('deep') ? 'high' : 'medium';
@@ -89,7 +89,17 @@ export const classifyIssueWithAI = async ({
   try {
     const promptText = `
 You are an expert municipal civic issue classifier for a smart city reporting system.
-Evaluate the reported civic issue based on the provided information and image (if available).
+Evaluate the reported civic issue based on the provided information and image.
+
+CRITICAL INSTRUCTION:
+- If an image is provided, VISUALLY INSPECT the image first. The image is your GROUND TRUTH.
+- Even if the user selected a different category or wrote a vague description (e.g. "large damage", "fix this"), identify what is physically visible in the photo:
+  * Road pits, holes, cracks, asphalt breakage, road craters -> "pothole"
+  * Trash, waste piles, overflowing bins, litter -> "garbage"
+  * Open drains, clogged gutters, sewage overflow, stagnant dirty water canal -> "drainage"
+  * Broken streetlights, damaged electric poles, unlit lamps -> "streetlight"
+  * Broken pipe, leaking potable water line, tap leakage -> "water"
+  * Any other municipal issue -> "other"
 
 Allowed categories: ["pothole", "garbage", "drainage", "streetlight", "water", "other"]
 Allowed severities: ["low", "medium", "high", "critical"]
@@ -103,7 +113,7 @@ Respond ONLY with a valid JSON object without markdown fences or additional expl
   "category": "pothole | garbage | drainage | streetlight | water | other",
   "confidence": 0.0 to 1.0,
   "severity": "low | medium | high | critical",
-  "reasoning": "Concise 1-sentence explanation"
+  "reasoning": "Concise 1-sentence explanation of what is detected in the image/text"
 }
 `.trim();
 
