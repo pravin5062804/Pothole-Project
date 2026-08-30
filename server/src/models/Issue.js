@@ -147,6 +147,10 @@ const issueSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    assignedCrewName: {
+      type: String,
+      default: '',
+    },
     resolutionEvidence: [
       {
         url: { type: String },

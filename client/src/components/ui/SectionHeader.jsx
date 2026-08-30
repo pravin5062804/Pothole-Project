@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 /**
  * Section header with title and optional subtitle.
  * Supports an underline-accented word via the `accent` prop.
@@ -22,11 +24,17 @@ export default function SectionHeader({ title, accent, subtitle }) {
     : title;
 
   return (
-    <div className="text-center mb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="text-center mb-12"
+    >
       <h2 className="font-primary text-[2rem] font-extrabold text-gray-900 mb-2">
         {renderedTitle}
       </h2>
       {subtitle && <p className="text-gray-500 text-base">{subtitle}</p>}
-    </div>
+    </motion.div>
   );
 }

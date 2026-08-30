@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Mail,
@@ -89,7 +91,7 @@ export default function AuthModal() {
     };
   }, [authModalOpen, closeAuthModal]);
 
-  if (!authModalOpen) return null;
+  const navigate = useNavigate();
 
   const handleLoginSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -103,7 +105,12 @@ export default function AuthModal() {
 
     setLoading(true);
     try {
-      await login(loginEmail, loginPassword);
+      const data = await login(loginEmail, loginPassword);
+      if (data?.user?.role === 'worker') {
+        navigate('/worker');
+      } else if (data?.user?.role === 'admin') {
+        navigate('/admin');
+      }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Login failed. Please try again.';
       setError(msg);
@@ -156,27 +163,37 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-        onClick={closeAuthModal}
-      />
+    <AnimatePresence>
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeAuthModal}
+          />
 
-      {/* Modal Card */}
-      <div
-        className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden z-10 animate-fade-in-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header Bar */}
-        <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-5 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-white backdrop-blur-md">
-              <Shield size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg leading-tight">CivicLink Portal</h3>
-              <p className="text-xs text-green-100 font-medium">
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 16 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 320 }}
+            className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Bar */}
+            <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-5 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-white backdrop-blur-md">
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg leading-tight">CivicLink Portal</h3>
+                  <p className="text-xs text-green-100 font-medium">
                 {authModalMode === 'login' ? 'Welcome back! Sign in to continue' : 'Create your citizen account'}
               </p>
             </div>
@@ -494,7 +511,9 @@ export default function AuthModal() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 }

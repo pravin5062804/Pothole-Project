@@ -24,9 +24,34 @@ app.set('io', io);
 // Setup Socket event listeners
 setupSocketHandler(io);
 
+import { User } from './models/User.js';
+
 // Start server after connecting to MongoDB
 const startServer = async () => {
   await connectDB();
+
+  // Ensure default Admin credentials exist
+  try {
+    const adminEmail = 'admin@gmail.com';
+    let admin = await User.findOne({ email: adminEmail });
+    if (!admin) {
+      await User.create({
+        name: 'Chief Municipal Admin',
+        email: adminEmail,
+        password: 'admin123',
+        role: 'admin',
+        ward: 'Central Administration Zone',
+      });
+      console.log(`🛡️  Admin account auto-created: ${adminEmail} (password: admin123)`);
+    } else if (admin.role !== 'admin') {
+      admin.role = 'admin';
+      admin.password = 'admin123';
+      await admin.save();
+      console.log(`🛡️  Admin account updated: ${adminEmail} (role: admin)`);
+    }
+  } catch (err) {
+    console.warn(`[Bootstrap] Admin seed notice:`, err.message);
+  }
 
   const PORT = ENV.PORT;
   server.listen(PORT, () => {

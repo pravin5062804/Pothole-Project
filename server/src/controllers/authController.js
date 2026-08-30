@@ -120,25 +120,25 @@ export const seedDemoUsers = async (req, res, next) => {
   try {
     const demoUsers = [
       {
-        name: 'Municipal Admin',
-        email: 'admin@civicreport.org',
-        password: 'AdminPassword123!',
+        name: 'Chief Municipal Admin',
+        email: 'admin@gmail.com',
+        password: 'admin123',
         role: 'admin',
-        ward: 'Central Admin',
+        ward: 'Central Administration Zone',
       },
       {
         name: 'Field Worker Ramesh',
-        email: 'worker@civicreport.org',
-        password: 'WorkerPassword123!',
+        email: 'worker@gmail.com',
+        password: 'worker123',
         role: 'worker',
-        ward: 'Ward A - Central',
+        ward: 'Ward 4 - Central Zone',
       },
       {
-        name: 'Citizen Priya',
-        email: 'citizen@civicreport.org',
-        password: 'CitizenPassword123!',
+        name: 'Citizen Aarav Nair',
+        email: 'aarav.citizen@example.com',
+        password: 'password123',
         role: 'citizen',
-        ward: 'Ward A - Central',
+        ward: 'Ward 1 - Metro Zone',
       },
     ];
 
@@ -147,13 +147,20 @@ export const seedDemoUsers = async (req, res, next) => {
       let user = await User.findOne({ email: u.email });
       if (!user) {
         user = await User.create(u);
+      } else {
+        // Ensure role and password match exactly
+        user.role = u.role;
+        user.password = u.password;
+        user.name = u.name;
+        user.ward = u.ward;
+        await user.save();
       }
       results.push({ email: u.email, role: u.role, defaultPassword: u.password });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Demo accounts ready.',
+      message: 'Admin and demo accounts configured successfully.',
       accounts: results,
     });
   } catch (error) {

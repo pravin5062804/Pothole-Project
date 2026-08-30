@@ -5,6 +5,8 @@ import {
   getIssueById,
   updateIssueStatus,
   assignWorker,
+  autoDispatchSingle,
+  batchAutoDispatch,
   getDashboardStats,
 } from '../controllers/issueController.js';
 import { protect, optionalAuth, authorizeRoles } from '../middlewares/auth.js';
@@ -32,5 +34,9 @@ router.post(
 // Admin & Worker routes
 router.patch('/:id/status', protect, authorizeRoles('admin', 'worker'), validateUpdateStatus, updateIssueStatus);
 router.patch('/:id/assign', protect, authorizeRoles('admin'), assignWorker);
+
+// Smart Queue Auto-Dispatch routes (Admin)
+router.post('/:id/auto-dispatch', protect, authorizeRoles('admin'), autoDispatchSingle);
+router.post('/queue/batch-dispatch', protect, authorizeRoles('admin'), batchAutoDispatch);
 
 export default router;

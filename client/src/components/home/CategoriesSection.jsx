@@ -1,5 +1,5 @@
+import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { useInView } from '../../hooks/useInView';
 import SectionHeader from '../ui/SectionHeader';
 import {
   PotholeIllustration,
@@ -55,44 +55,68 @@ const CATEGORIES = [
   },
 ];
 
-export default function CategoriesSection() {
-  const [ref, isInView] = useInView();
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+export default function CategoriesSection() {
   return (
-    <section className="py-20" id="categories" ref={ref}>
+    <section className="py-20" id="categories">
       <SectionHeader title="Common Issues in Your City" accent="Issues" />
 
-      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 gap-5">
-        {CATEGORIES.map((cat, index) => (
-          <div
-            className="bg-white border border-gray-200 rounded-2xl p-6 text-left cursor-pointer transition-all duration-300 hover:border-green-300 hover:shadow-lg hover:shadow-green-600/10 hover:-translate-y-1 group"
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="max-w-[1200px] mx-auto px-6 grid grid-cols-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 gap-5"
+      >
+        {CATEGORIES.map((cat) => (
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -6, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white border border-gray-200 rounded-2xl p-6 text-left cursor-pointer transition-shadow duration-300 hover:border-green-300 hover:shadow-xl hover:shadow-green-600/10 group flex flex-col justify-between"
             key={cat.title}
-            style={{
-              opacity: isInView ? 1 : 0,
-              transform: isInView ? 'translateY(0)' : 'translateY(24px)',
-              transition: `all 0.5s ease ${index * 0.08}s`,
-            }}
           >
-            <div
-              className={`w-full h-[100px] flex items-center justify-center mb-4 rounded-[10px] overflow-hidden ${cat.bgColor}`}
-            >
-              <cat.Illustration />
+            <div>
+              <div
+                className={`w-full h-[100px] flex items-center justify-center mb-4 rounded-[10px] overflow-hidden ${cat.bgColor} transition-transform duration-300 group-hover:scale-105`}
+              >
+                <cat.Illustration />
+              </div>
+              <h3 className="font-primary text-[0.95rem] font-bold text-gray-900 mb-1.5 group-hover:text-green-700 transition-colors">
+                {cat.title}
+              </h3>
+              <p className="text-[0.78rem] text-gray-500 leading-relaxed mb-3.5 min-h-[46px]">
+                {cat.description}
+              </p>
             </div>
-            <h3 className="font-primary text-[0.95rem] font-bold text-gray-900 mb-1.5">
-              {cat.title}
-            </h3>
-            <p className="text-[0.78rem] text-gray-500 leading-relaxed mb-3.5 min-h-[46px]">
-              {cat.description}
-            </p>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
               <span className="text-[0.82rem] font-semibold text-orange-500">{cat.count}</span>
-              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-all duration-200 group-hover:bg-green-600 group-hover:text-white">
+              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-all duration-200 group-hover:bg-green-600 group-hover:text-white group-hover:translate-x-1">
                 <ArrowRight size={14} />
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

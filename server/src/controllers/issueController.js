@@ -1,6 +1,7 @@
 import { Issue } from '../models/Issue.js';
 import { uploadToCloudinary } from '../config/cloudinary.js';
 import { classifyIssueWithAI } from '../services/aiService.js';
+import { autoDispatchSingleIssue, batchAutoDispatchQueue } from '../services/queueDispatchService.js';
 import { findDuplicateIssue, mergeDuplicateReport } from '../services/geoClusterService.js';
 import { calculatePriorityScore } from '../services/priorityService.js';
 import {
@@ -363,14 +364,19 @@ export const updateIssueStatus = async (req, res, next) => {
 export const assignWorker = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { workerId, note = '' } = req.body;
+    const { workerId, crewName, workerName, note = '' } = req.body;
 
     const issue = await Issue.findById(id);
     if (!issue) {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    issue.assignedWorker = workerId;
+    if (workerId) {
+      issue.assignedWorker = workerId;
+    }
+    if (crewName || workerName) {
+      issue.assignedCrewName = crewName || workerName;
+    }
     if (issue.status === 'reported' || issue.status === 'verified') {
       issue.status = 'assigned';
     }
@@ -490,3 +496,47 @@ export const getDashboardStats = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Auto-dispatch single issue using smart queue algorithm
+ * @route   POST /api/issues/:id/auto-dispatch
+ * @access  Private (Admin)
+ */
+export const autoDispatchSingle = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const io = req.app.get('io');
+    const result = await autoDispatchSingleIssue(id, req.user, io);
+
+    res.status(200).json({
+      success: true,
+      message: `Issue auto-dispatched successfully to ${result.assignedTo}.`,
+      issue: result.issue,
+      assignedTo: result.assignedTo,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Batch auto-dispatch all unassigned issues in the queue
+ * @route   POST /api/issues/queue/batch-dispatch
+ * @access  Private (Admin)
+ */
+export const batchAutoDispatch = async (req, res, next) => {
+  try {
+    const io = req.app.get('io');
+    const result = await batchAutoDispatchQueue(req.user, io);
+
+    res.status(200).json({
+      success: true,
+      message: `Auto-dispatched ${result.dispatchedCount} issues via Smart Priority Queue.`,
+      dispatchedCount: result.dispatchedCount,
+      dispatchedIssues: result.dispatchedIssues,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

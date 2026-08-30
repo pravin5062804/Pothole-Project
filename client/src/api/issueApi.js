@@ -35,9 +35,49 @@ export const issueApi = {
     return response.data;
   },
 
-  // Submit community confirmation vote
-  submitVote: async (id, voteData) => {
-    const response = await api.post(`/verification/${id}/vote`, voteData);
+  // Assign worker/team to an issue (Admin)
+  assignWorker: async (id, data) => {
+    const response = await api.patch(`/issues/${id}/assign`, data);
+    return response.data;
+  },
+
+  // Auto-dispatch single issue via Smart Priority Queue
+  autoDispatchSingle: async (id) => {
+    const response = await api.post(`/issues/${id}/auto-dispatch`);
+    return response.data;
+  },
+
+  // Batch auto-dispatch all unassigned issues in queue
+  batchAutoDispatch: async () => {
+    const response = await api.post('/issues/queue/batch-dispatch');
+    return response.data;
+  },
+
+  // Field Worker uploads resolution evidence photos & notes
+  submitEvidence: async (id, formData) => {
+    const response = await api.post(`/verification/${id}/submit-evidence`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Submit community confirmation or dispute vote (Citizen)
+  submitVote: async (id, formDataOrData) => {
+    const headers =
+      formDataOrData instanceof FormData
+        ? { 'Content-Type': 'multipart/form-data' }
+        : {};
+    const response = await api.post(`/verification/${id}/vote`, formDataOrData, {
+      headers,
+    });
+    return response.data;
+  },
+
+  // Get issue confirmation votes tally & history
+  getIssueVotes: async (id) => {
+    const response = await api.get(`/verification/${id}/votes`);
     return response.data;
   },
 };

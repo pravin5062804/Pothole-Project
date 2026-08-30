@@ -1,5 +1,5 @@
+import { motion } from 'framer-motion';
 import { ClipboardCheck, CheckCircle, TrendingUp, Users } from 'lucide-react';
-import { useInView } from '../../hooks/useInView';
 import AnimatedCounter from '../ui/AnimatedCounter';
 
 const STATS = [
@@ -37,29 +37,52 @@ const STATS = [
   },
 ];
 
-export default function StatsSection() {
-  const [ref, isInView] = useInView();
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
+
+export default function StatsSection() {
   return (
-    <section className="bg-gray-50 border-t border-b border-gray-100" id="stats" ref={ref}>
-      <div className="max-w-[1200px] mx-auto px-6 py-10 grid grid-cols-4 max-md:grid-cols-2 max-md:gap-5 max-sm:grid-cols-1">
+    <section className="bg-gray-50 border-t border-b border-gray-100" id="stats">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-40px' }}
+        className="max-w-[1200px] mx-auto px-6 py-10 grid grid-cols-4 max-md:grid-cols-2 max-md:gap-5 max-sm:grid-cols-1"
+      >
         {STATS.map((stat, index) => (
-          <div
-            className={`flex items-start gap-4 px-7 py-5 relative ${
+          <motion.div
+            variants={itemVariants}
+            whileHover={{ y: -3, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className={`flex items-start gap-4 px-7 py-5 relative rounded-xl transition-colors hover:bg-white/70 ${
               index < STATS.length - 1 ? 'stat-divider' : ''
             }`}
             key={stat.label}
-            style={{
-              opacity: isInView ? 1 : 0,
-              transform: isInView ? 'translateY(0)' : 'translateY(20px)',
-              transition: `all 0.5s ease ${index * 0.1}s`,
-            }}
           >
-            <div
-              className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shrink-0 ${stat.bgClass} ${stat.iconClass}`}
+            <motion.div
+              whileHover={{ rotate: 10, scale: 1.1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+              className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${stat.bgClass} ${stat.iconClass}`}
             >
               {stat.icon}
-            </div>
+            </motion.div>
             <div>
               <h3 className="font-primary text-[1.9rem] font-extrabold text-gray-900 leading-tight">
                 <AnimatedCounter target={stat.number} />
@@ -67,9 +90,9 @@ export default function StatsSection() {
               <h4 className="text-[0.85rem] font-semibold text-gray-700 mb-0.5">{stat.label}</h4>
               <p className="text-[0.78rem] text-gray-500 leading-snug">{stat.description}</p>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

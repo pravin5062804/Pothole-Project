@@ -1,5 +1,5 @@
+import { motion } from 'framer-motion';
 import { MapPin, FileText, Bell, CheckCircle } from 'lucide-react';
-import { useInView } from '../../hooks/useInView';
 import SectionHeader from '../ui/SectionHeader';
 
 const STEPS = [
@@ -29,41 +29,66 @@ const STEPS = [
   },
 ];
 
-export default function HowItWorksSection() {
-  const [ref, isInView] = useInView();
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
 
+const stepVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+export default function HowItWorksSection() {
   return (
-    <section className="py-20 bg-gray-50" id="how-it-works" ref={ref}>
+    <section className="py-20 bg-gray-50" id="how-it-works">
       <SectionHeader
         title="How It Works"
         accent="It Works"
         subtitle="Report and resolve civic issues in 4 simple steps"
       />
 
-      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-4 max-lg:grid-cols-2 max-md:grid-cols-1 max-md:max-w-[400px] gap-6">
-        {STEPS.map((step, index) => (
-          <div
-            className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="max-w-[1200px] mx-auto px-6 grid grid-cols-4 max-lg:grid-cols-2 max-md:grid-cols-1 max-md:max-w-[400px] gap-6"
+      >
+        {STEPS.map((step) => (
+          <motion.div
+            variants={stepVariants}
+            whileHover={{ y: -6, scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100 transition-shadow duration-300 hover:shadow-xl hover:border-green-200 group"
             key={step.title}
-            style={{
-              opacity: isInView ? 1 : 0,
-              transform: isInView ? 'translateY(0)' : 'translateY(24px)',
-              transition: `all 0.5s ease ${index * 0.12}s`,
-            }}
           >
-            <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 font-primary text-xl font-extrabold flex items-center justify-center mx-auto mb-4">
+            <motion.div
+              whileHover={{ scale: 1.15, rotate: 5 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+              className="w-12 h-12 rounded-full bg-green-100 text-green-700 font-primary text-xl font-extrabold flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors duration-200"
+            >
               {step.number}
-            </div>
-            <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-4">
+            </motion.div>
+            <div className="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
               {step.icon}
             </div>
             <h3 className="font-primary text-[1.05rem] font-bold text-gray-900 mb-2">
               {step.title}
             </h3>
             <p className="text-[0.85rem] text-gray-500 leading-relaxed">{step.description}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }
