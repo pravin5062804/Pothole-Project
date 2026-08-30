@@ -44,25 +44,30 @@ export const uploadToCloudinary = async (buffer, folder = 'civic_reports', mimet
   if (!buffer) return null;
 
   if (isCloudinaryConfigured) {
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder,
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve({
-            url: result.secure_url,
-            public_id: result.public_id,
-          });
-        }
-      );
-      uploadStream.end(buffer);
-    });
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: 'auto',
+          },
+          (error, res) => {
+            if (error) return reject(error);
+            resolve({
+              url: res.secure_url,
+              public_id: res.public_id,
+            });
+          }
+        );
+        uploadStream.end(buffer);
+      });
+      return result;
+    } catch (err) {
+      console.warn(`[Cloudinary Warning] Upload failed (${err.message}). Using local base64 fallback.`);
+    }
   }
 
-  // Fallback for development without Cloudinary credentials
+  // Fallback for development / offline / invalid credentials
   const base64 = buffer.toString('base64');
   const dataUrl = `data:${mimetype};base64,${base64}`;
   return {

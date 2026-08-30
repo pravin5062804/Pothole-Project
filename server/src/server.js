@@ -5,6 +5,7 @@ import { connectDB } from './config/db.js';
 import { ENV } from './config/env.js';
 import { setupSocketHandler } from './sockets/socketHandler.js';
 
+// Server instance & setup
 // Create HTTP server
 const server = http.createServer(app);
 

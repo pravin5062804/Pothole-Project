@@ -109,22 +109,22 @@ Respond ONLY with a valid JSON object without markdown fences or additional expl
 
     let messages = [];
 
-    // If image buffer or URL is provided and vision is supported
-    if ((imageBuffer || imageUrl) && ENV.GROQ_VISION_MODEL) {
+    // Prioritize Cloudinary image URL, fallback to image buffer
+    if ((imageUrl || imageBuffer) && ENV.GROQ_VISION_MODEL) {
       let imageContent;
-      if (imageBuffer) {
+      if (imageUrl) {
+        imageContent = {
+          type: 'image_url',
+          image_url: {
+            url: imageUrl,
+          },
+        };
+      } else if (imageBuffer) {
         const base64Data = imageBuffer.toString('base64');
         imageContent = {
           type: 'image_url',
           image_url: {
             url: `data:${mimetype};base64,${base64Data}`,
-          },
-        };
-      } else if (imageUrl && !imageUrl.startsWith('data:')) {
-        imageContent = {
-          type: 'image_url',
-          image_url: {
-            url: imageUrl,
           },
         };
       }

@@ -16,8 +16,8 @@ export const ENV = {
 
   // Groq AI
   GROQ_API_KEY: process.env.GROQ_API_KEY || '',
-  GROQ_MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-  GROQ_VISION_MODEL: process.env.GROQ_VISION_MODEL || 'llama-3.2-11b-vision-preview',
+  GROQ_MODEL: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
+  GROQ_VISION_MODEL: process.env.GROQ_VISION_MODEL || '',
 
   // Nodemailer
   SMTP_HOST: process.env.SMTP_HOST || 'smtp.ethereal.email',
