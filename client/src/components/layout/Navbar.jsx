@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Globe, Shield, Menu, X, User, LogOut, Briefcase, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import {logo} from "../../assets/logo.png";
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -70,19 +71,22 @@ export default function Navbar() {
   return (
     <nav
       id="navbar"
-      className={`sticky top-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-100 px-6 transition-shadow duration-200 ${
-        scrolled ? 'shadow-md' : ''
-      }`}
+      className={`sticky top-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-100 px-6 transition-shadow duration-200 ${scrolled ? 'shadow-md' : ''
+        }`}
     >
       <div className="max-w-[1200px] mx-auto flex items-center justify-between h-[72px]">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <motion.div
-            whileHover={{ rotate: 15, scale: 1.08 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 10 }}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-green-600/20"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300, damping: 10 }}
+            className="flex items-center"
           >
-            <Shield size={22} className="text-white" />
+            <img
+              src={logo}
+              alt="FixMyCity"
+              className="h-11 w-auto object-contain"
+            />
           </motion.div>
           <div className="flex flex-col">
             <span className="font-primary text-[1.25rem] font-black text-gray-900 tracking-tight leading-none group-hover:text-green-600 transition-colors">
@@ -102,11 +106,10 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 to={link.to}
-                className={`relative px-3.5 py-2 rounded-lg text-[0.88rem] font-medium transition-colors ${
-                  isActive
+                className={`relative px-3.5 py-2 rounded-lg text-[0.88rem] font-medium transition-colors ${isActive
                     ? 'text-green-700 font-semibold'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 {link.label}
                 {isActive && (
